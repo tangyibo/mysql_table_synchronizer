@@ -93,12 +93,13 @@ class MysqlUtil:
                 sql += 'not null '
 
             if column_default is not None:
-                sql += 'default {default} '.format(default=column_default)
+                if not column_default == "'":
+                    sql += 'default \'{default}\''.format(default=column_default)
 
             if column_comment is not None:
                 sql += 'comment \'{comment}\''.format(comment=column_comment)
 
-        print(sql)
+        print(sql + ";")
         if is_execute:
             count = self.execute(sql)
             print(count)
@@ -141,7 +142,7 @@ class MysqlUtil:
         if table['table_comment'] is not None:
             sql += ' comment = \'{comment}\''.format(comment=table['table_comment'])
 
-        print(sql)
+        print(sql + ";")
         if is_execute:
             count = self.execute(sql)
             print(count)

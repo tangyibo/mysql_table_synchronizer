@@ -34,9 +34,10 @@ class CheckSQL:
                 losing_tables.append(table_name)
                 source_columns = self.__mysql_util1.get_columns(table_name)
                 self.__mysql_util2.create_table(s_t, is_execute, source_columns)
+                print()
 
         if len(losing_tables) > 0:
-            print('\nthis schema does not have these tables:')
+            print('this schema does not have these tables:')
             print(losing_tables)
 
     def check_column(self, table, is_execute):
@@ -50,13 +51,22 @@ class CheckSQL:
 
         losing_columns = []
         change_columns = []
+        additional_columns = []
 
         source_columns = self.__mysql_util1.get_columns(table)
         target_columns = self.__mysql_util2.get_columns(table)
 
+        source_col_names = []
+        for sc in source_columns:
+            source_col_names.append(sc["column_name"])
+
         target_col_names = []
         for t_c in target_columns:
             target_col_names.append(t_c['column_name'])
+            if not t_c['column_name'] in source_col_names:
+                # 比源多出的字段
+                additional_columns.append(t_c)
+                self.__mysql_util2.update_column(t_c, "drop", table, is_execute)
 
         for s_c in source_columns:
             # print(s_c)
@@ -69,8 +79,9 @@ class CheckSQL:
 
                     for d_t in target_columns:
                         if s_c['column_name'] == d_t['column_name']:
-                            print(s_c)
-                            print(d_t)
+                            pass
+                            # print(s_c)
+                            # print(d_t)
 
                     # 更新不同的字段
                     self.__mysql_util2.update_column(s_c, 'update', table, is_execute)
@@ -80,10 +91,16 @@ class CheckSQL:
                 # 新增缺失的字段
                 self.__mysql_util2.update_column(s_c, 'add', table, is_execute)
 
-        if len(losing_columns) > 0:
-            print('this table {0} does not have these columns:'.format(table))
-            print(losing_columns)
-
-        if len(change_columns) > 0:
-            print('this table {0} is different from target columns:'.format(table))
-            print(change_columns)
+        # if len(losing_columns) > 0:
+        #     print('-- this table {0} does not have these columns:'.format(table))
+        #     print("-- ", end="")
+        #     print(losing_columns)
+        #     print("\n")
+        #
+        # if len(change_columns) > 0:
+        #     print('-- this table {0} is different from target columns:'.format(table))
+        #     print("-- ", end="")
+        #     print(change_columns)
+        #     print("\n")
+        if len(losing_columns) > 0 or len(change_columns) > 0 or len(additional_columns) > 0:
+            print()
